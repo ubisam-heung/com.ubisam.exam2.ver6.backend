@@ -1,9 +1,11 @@
+
 package backend.rest.busRoutes;
 
 import java.io.Serializable;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.rest.core.annotation.HandleAfterCreate;
 import org.springframework.data.rest.core.annotation.HandleAfterDelete;
@@ -15,6 +17,8 @@ import org.springframework.data.rest.core.annotation.RepositoryEventHandler;
 import org.springframework.stereotype.Component;
 
 import backend.domain.BusRoute;
+import backend.domain.BusStop;
+import backend.domain.properties.LinkConversion;
 import io.u2ware.common.data.jpa.repository.query.JpaSpecificationBuilder;
 import io.u2ware.common.data.rest.core.annotation.HandleAfterRead;
 import io.u2ware.common.data.rest.core.annotation.HandleBeforeRead;
@@ -25,47 +29,54 @@ public class BusRouteHandler {
 
   protected Log logger = LogFactory.getLog(getClass());
 
+  private @Autowired LinkConversion linkConversion;
+
+  public void conversion(BusRoute e) throws Exception{
+		logger.info("conversion1 "+e.getBusStopLinks());
+
+		linkConversion.convertWithEntity(BusStop.class, e.getBusStopLinks(), ref->{e.setBusStops(ref);});
+  }
+
   @HandleBeforeRead
-  public void HandleBeforeRead(BusRoute e, Specification<BusRoute> spec) throws Exception{
+  public void beforeRead(BusRoute e, Specification<BusRoute> spec) throws Exception{
+    logger.info("[HandleBeforeRead] "+e);
     // 쿼리 작성
     JpaSpecificationBuilder<BusRoute> query = JpaSpecificationBuilder.of(BusRoute.class);
-    logger.info("@HandleBeforeRead: "+ e);
     String keyword = e.getKeyword();
     String option = e.getOption();
-    if(keyword == null || keyword.trim().isEmpty()){
-      query.where().build(spec);
-      return;
-    }
-    switch (option) {
-      case "busAll":
+    if (keyword == null || keyword.trim().isEmpty()) {
+        query.where().build(spec);
+        return;
+    } 
+    switch(option){
+      case "busAll":  
         query.where()
-          .and().like("busRouteName", "%"+keyword+"%")
-          .or().like("busRouteStart", "%"+keyword+"%")
-          .or().like("busRouteEnd", "%"+keyword+"%")
-          .build(spec);
+            .and().like("busRouteName", "%" + keyword + "%")
+            .or().like("busRouteStart", "%" + keyword + "%")
+            .or().like("busRouteEnd", "%" + keyword + "%")
+            .build(spec);
         break;
       case "busRouteName":
         query.where()
-          .and().like("busRouteName", "%"+keyword+"%")
-          .build(spec);
+            .and().like("busRouteName", "%" + keyword + "%")
+            .build(spec);
         break;
       case "busRouteStart":
         query.where()
-          .and().like("busRouteStart", "%"+keyword+"%")
-          .build(spec);
+            .and().like("busRouteStart", "%" + keyword + "%")
+            .build(spec);
         break;
       case "busRouteEnd":
         query.where()
-          .and().like("busRouteEnd", "%"+keyword+"%")
-          .build(spec);
+            .and().like("busRouteEnd", "%" + keyword + "%")
+            .build(spec);
         break;
       default:
         query.where()
-          .and().like("busRouteName", "%"+keyword+"%")
-          .or().like("busRouteStart", "%"+keyword+"%")
-          .or().like("busRouteEnd", "%"+keyword+"%")
+          .and().like("busRouteName", "%" + keyword + "%")
+          .or().like("busRouteStart", "%" + keyword + "%")
+          .or().like("busRouteEnd", "%" + keyword + "%")
           .build(spec);
-        break;
     }
   }
   
@@ -77,11 +88,12 @@ public class BusRouteHandler {
 
   @HandleBeforeCreate
   public void beforeCreate(BusRoute e) throws Exception{
-    logger.info("[HandlebeforeCreate] "+e);
+    conversion(e);
+    logger.info("[HandleBeforeCreate] "+e);
   }
-
   @HandleBeforeSave
   public void beforeSave(BusRoute e) throws Exception{
+    conversion(e);
     logger.info("[HandlebeforeSave] "+e);
   }
   
@@ -104,5 +116,4 @@ public class BusRouteHandler {
   public void afterDelete(BusRoute e) throws Exception{
     logger.info("[HandleafterDelete] "+e);
   }
-  
 }

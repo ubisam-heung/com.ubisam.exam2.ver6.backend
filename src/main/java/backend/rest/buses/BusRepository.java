@@ -12,5 +12,5 @@ import java.util.List;
 public interface BusRepository extends RestfulJpaRepository<Bus, UUID> {
 
   @RestResource(exported = false)
-  List<Bus> findByBusNumber(Integer busNumber);
+  public List<Bus> findByBusNumber(Integer busNumber);
 }

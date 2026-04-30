@@ -10,8 +10,8 @@ import java.util.List;
 
 
 public interface BusDriverRepository extends RestfulJpaRepository<BusDriver, UUID>{
-  
+
   @RestResource(exported = false)
-  List<BusDriver> findByBusDriverName(String busDriverName);
+  public List<BusDriver> findByBusDriverName(String busDriverName);
 
 }
